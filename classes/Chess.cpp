@@ -271,6 +271,7 @@ void Chess::bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
         }
     }
 
+    // if a pawn moves to the en passant square, we need to remove the captured pawn
     if (pieceType == Pawn && oldEnPassant >= 0 && toIndex == oldEnPassant) {
         int capturedIndex = (color == 0) ? (toIndex - 8) : (toIndex + 8);
         int cx = capturedIndex % 8;
@@ -281,10 +282,13 @@ void Chess::bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
         }
     }
 
+    // reset it, because en passant only lasts for one turn
     _enPassantSquare = -1;
     if (pieceType == Pawn) {
         int fromRank = fromIndex / 8;
         int toRank = toIndex / 8;
+
+        // if the pawn moves two forward, we set the en passant square 
         if (std::abs(toRank - fromRank) == 2) {
             int midRank = (fromRank + toRank) / 2;
             int file = fromIndex % 8;
@@ -292,6 +296,7 @@ void Chess::bitMovedFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
         }
     }
 
+    // if a pawn reachest the last rank we promote it to queen
     if (pieceType == Pawn) {
         int rank = toIndex / 8;
         bool promote = (color == 0 && rank == 7) || (color == 1 && rank == 0);
@@ -316,6 +321,7 @@ void Chess::stopGame()
 
 Player* Chess::ownerAt(int x, int y) const
 {
+    // make sure we are in the board.
     if (x < 0 || x >= 8 || y < 0 || y >= 8) {
         return nullptr;
     }
@@ -346,6 +352,8 @@ std::string Chess::stateString()
 {
     std::string s;
     s.reserve(64);
+
+    // iterate thorugh the baord and append the FEN characters
     _grid->forEachSquare([&](ChessSquare* square, int x, int y) {
             s += pieceNotation( x, y );
         }
@@ -362,7 +370,9 @@ void Chess::setStateString(const std::string &s)
             return;
         }
 
+        // lowercase for black and uppercase for white
         int player = std::islower(c) ? 1 : 0;
+
         ChessPiece piece = NoPiece;
         switch (std::tolower(c)) {
             case 'p': piece = Pawn; break;
@@ -374,7 +384,9 @@ void Chess::setStateString(const std::string &s)
             default:  piece = NoPiece; break;
         }
 
+        //clear the square first
         square->destroyBit();
+        // if the char is not 0 (board not empty), then we add the piece to the board
         if (piece != NoPiece) {
             Bit* bit = PieceForPlayer(player, piece);
             bit->setGameTag(piece + (player * 128));
@@ -393,36 +405,6 @@ void Chess::generateKnightMoves(std::vector<BitMove>& moves, BitBoard knightBoar
             moves.emplace_back(fromSquare, toSquare, Knight);
         });
     });
-}
-
-void Chess::generateKnightMoves(std::vector<BitMove> &moves, std::string &state){
-    std::pair<int, int> knightOffsets[] = {
-        {1, 2}, {2, 1}, {2, -1}, {1, -2},
-        {-1, -2}, {-2, -1}, {-2, 1}, {-1, 2}
-    };
-
-    int player = getCurrentPlayer()->playerNumber();
-    char knightPiece = (player == 0) ? 'N' : 'n';
-    int index = 0;
-    for (char square : state) {
-        if (square == knightPiece) {
-            int x = index % 8;
-            int y = index / 8;
-
-            for (auto [dx, dy] : knightOffsets) {
-                int nx = x + dx, ny = y + dy;
-                if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
-                    int targetIndex = ny * 8 + nx;
-                    char targetPiece = state[targetIndex];
-                    bool targetFriendly = (player == 0) ? (std::isupper(targetPiece) != 0) : (std::islower(targetPiece) != 0);
-                    if (!targetFriendly) {
-                        moves.emplace_back(index, targetIndex, Knight);
-                    }
-                }
-            }
-        }
-        index++;
-    }
 }
 
 
@@ -560,6 +542,7 @@ uint64_t Chess::computeAttackedSquares(int byPlayer) const {
 void Chess::generateKingMoves(std::vector<BitMove>& moves, uint64_t kingBoard, uint64_t friendlyPieces, uint64_t dangerSquares) {
     int player = getCurrentPlayer()->playerNumber();
     BitBoard(kingBoard).forEachBit([&](int fromSquare) {
+        // 8way king moves but we remove any occupied by friendly pieces and any that are attacked
         uint64_t attacks = KingAttacks[fromSquare] & ~friendlyPieces & ~dangerSquares;
         BitBoard(attacks).forEachBit([&](int toSquare) {
             moves.emplace_back(fromSquare, toSquare, King);
