@@ -1,0 +1,10 @@
+^C:\USERS\CAMCI\ONEDRIVE\DESKTOP\CMPM123\CHESS-123\BUILD\CMAKEFILES\442238C7D8CA3649CF8807C7C0E14C91\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/Users/camci/OneDrive/Desktop/CMPM123/chess-123 -BC:/Users/camci/OneDrive/Desktop/CMPM123/chess-123/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/Users/camci/OneDrive/Desktop/CMPM123/chess-123/build/tictactoe.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
