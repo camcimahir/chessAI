@@ -39,6 +39,13 @@ void BitHolder::setBit(Bit *abit)
 	}
 }
 
+Bit *BitHolder::releaseBit()
+{
+	Bit *b = _bit;
+	_bit = nullptr;
+	return b;
+}
+
 void BitHolder::destroyBit()
 {
 	if (_bit)
@@ -64,7 +71,8 @@ void BitHolder::cancelDragBit(Bit *bit)
 
 void BitHolder::draggedBitTo(Bit *bit, BitHolder *dst)
 {
-	setBit(nullptr);
+	// The bit is now owned by the destination holder; do not delete it.
+	releaseBit();
 }
 
 bool BitHolder::canDropBitAtPoint(Bit *bit, const ImVec2 &point)
@@ -90,6 +98,6 @@ void BitHolder::initHolder(const ImVec2 &position, const ImVec4 &color, const ch
 	setLocalZOrder(0);
 	setHighlighted(false);
 	setGameTag(0);
-	setBit(nullptr);
+	destroyBit();
 	LoadTextureFromFile(spriteName);
 }

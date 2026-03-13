@@ -1,0 +1,76 @@
+void Chess::updateAI(){
+
+    char baseState[65];
+    constexpr int myInfinity = 9999999;
+    int bestMoveScore = -myInfinity;
+    BitMove bestMove;
+    GameState gs;
+    std::string stateStr = stateString();
+    int i = 0;
+    for (char ch : stateStr) {
+        gs.state[i++] = ch;
+    }
+    std::string copyState = stateString();
+    _countSearch = 0;
+
+    auto moves = generateAllMoves(gs, _currentPlayer);
+    const auto start = std::chrono::high_resolution_clock::now();
+
+    for(auto move : moves) {
+        strcpy(&baseState[0], copyState.c_str());
+
+        gs.pushMove(move);
+        int bestValue = -negamax(baseState, 3, -myInfinity, myInfinity, 1);
+        gs.popMove();
+        if (bestValue > bestMoveScore) {
+            bestMoveScore = bestValue;
+            bestMove = move;
+        }
+    }
+
+    std::cout << "searched " << _countSearch << " nodes" << std::endl;
+    if (bestMoveScore != -myInfinity) {
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+        double nps = duration.count() > 0 ? (_countSearch * 1000.0 / duration.count()) : _countSearch;
+
+        std::cout << "Depth " << 0 << ": " << _countSearch << " nodes";
+        std::cout << " (" << duration.count() << "ms, ";
+        std::cout << nps << " nps)" << std::endl;
+
+        int srcSquare = bestMove.from;
+        int dstSquare = bestMove.to;
+        BitHolder& src = getHolderAt(srcSquare&7, srcSquare / 8);
+        BitHolder& dst = getHolderAt(dstSquare&7, dstSquare / 8);
+        Bit* bit = src.bit();
+        dst.dropBitAtPoint(bit, ImVec2(0, 0));
+        src.setBit(nullptr);
+        bitMovedFromTo(*bit, src, dst);
+    }
+}
+
+int Chess::negamax(GameState& state, int depth, int alpha, int beta, int playerColor){
+
+    _countSearch++;
+
+    if (depth == 0) {
+        int score = Evaluate(state);
+        return playerColor * score;
+    }
+
+    int bestVal = -9999999; //min value
+    auto negaMoves = generateAllMoves(state, playerColor);
+    for (auto move : negaMoves) {
+        state.pushMove(move);
+        bestVal = std::max(bestVal, -negamax(state, depth - 1, -beta, -alpha, -playerColor));
+        //undo state move
+        state.popMove();
+        //alpha beta pruning
+        alpha = std::max(alpha, bestVal);
+        if (alpha >= beta) {
+            break; 
+        }
+    }
+    return bestVal;
+}

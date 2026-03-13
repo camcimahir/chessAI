@@ -1,6 +1,6 @@
-# Chess Game with C++
+# Chess Game with C++ and Negamax AI 
 
-I built a complete functional chess game using baord state and legal move generation engine with c++, CMake, and Dear ImGui, integrated into the prebuilt boardgame building class system by Professor Graeme Devine.I will write an AI using the negamax algorithm in the next steps so I wanted to ensure good performance. That is why I used a 64-bit integer bitboard for the entire board and move generation logic.
+I built a completely functional chess game and AI using baord state and legal move generation engine with c++, CMake, and Dear ImGui, integrated into the prebuilt boardgame building class system by Professor Graeme Devine.I will write an AI using the negamax algorithm in the next steps so I wanted to ensure good performance. That is why I used a 64-bit integer bitboard for the entire board and move generation logic.
 
 
 ## System & Tools
@@ -11,6 +11,15 @@ I built a complete functional chess game using baord state and legal move genera
 ## Game Engine Features
 * **Gameplay Rules:** I implemented all chess game rules, however the pawn promotion automatically transforms into a queen rather than giving an option to the player. (even though minor this decision will help with the speed of the Negamax algorithm)
 * **State Management:** I am using FEN (Forsyth-Edwards Notation) parsing. It loads board states, helps with saving and restoring games (not implemented yet), and help  track castling rights, implement en passant squares without having to slow down the game.
+
+
+## AI Implementation
+
+For the single-player mode, the game features an AI that plays as Black. 
+
+* **Negamax with Alpha-Beta Pruning:** The AI uses a Negamax algorithm, searching though a tree of all the possible moves. I am also using alpha-beta pruning which cuts off unpromising branches early.
+* **Evaluation Function:** When the search reaches its depth limit which is currently set to 3 (the AI runs quite fast all they way up to 5) it will use the evaluation function to determine a move. (the AI's highest found value is printed in the terminal as well so I could add a feature to show the player who the AI thinks is winning)
+* **Decoupled Game State:** To maximize performance, the AI does not use the UI to search through the possible moves, instead it uses the GameState structure (a 64-character array) in combination with bitboards for the calculations.
 
 ### Bitboard Architecture
 

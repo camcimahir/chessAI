@@ -36,7 +36,12 @@ namespace ClassGame {
 
                 if (gameOver) {
                     ImGui::Text("Game Over!");
-                    ImGui::Text("Winner: %d", gameWinner);
+                    if (gameWinner == -1) {
+                        ImGui::Text("Result: Draw");
+                    } else {
+                        const char* winnerName = (gameWinner == 0) ? "White Player" : "Black Player";
+                        ImGui::Text("Winner: %s", winnerName);
+                    }
                     if (ImGui::Button("Reset Game")) {
                         game->stopGame();
                         game->setUpBoard();
@@ -44,6 +49,8 @@ namespace ClassGame {
                         gameWinner = -1;
                     }
                 }
+                static bool chessSetupMode = false;
+
                 if (!game) {
                     if (ImGui::Button("Start Tic-Tac-Toe")) {
                         game = new TicTacToe();
@@ -57,9 +64,35 @@ namespace ClassGame {
                         game = new Othello();
                         game->setUpBoard();
                     }
-                    if (ImGui::Button("Start Chess")) {
-                        game = new Chess();
-                        game->setUpBoard();
+
+                    if (!chessSetupMode) {
+                        if (ImGui::Button("Start Chess")) {
+                            chessSetupMode = true;
+                        }
+                    } else {
+                        ImGui::Text("Select Chess Game Mode:");
+
+                        // Human vs Human
+                        if (ImGui::Button("Chess: Human vs Human")) {
+                            Chess* chess = new Chess();
+                            chess->setUseAI(false);        // no AI; both sides human
+                            game = chess;
+                            game->setUpBoard();
+                            chessSetupMode = false;
+                        }
+
+                        // Human vs AI (player as White, AI as Black)
+                        if (ImGui::Button("Chess: Human vs AI (you as White)")) {
+                            Chess* chess = new Chess();
+                            chess->setUseAI(true);         // enable AI (Black)
+                            game = chess;
+                            game->setUpBoard();
+                            chessSetupMode = false;
+                        }
+
+                        if (ImGui::Button("Cancel Chess Setup")) {
+                            chessSetupMode = false;
+                        }
                     }
                 } else {
                     ImGui::Text("Current Player Number: %d", game->getCurrentPlayer()->playerNumber());
@@ -76,7 +109,7 @@ namespace ClassGame {
 
                 ImGui::Begin("GameWindow");
                 if (game) {
-                    if (game->gameHasAI() && (game->getCurrentPlayer()->isAIPlayer() || game->_gameOptions.AIvsAI))
+                    if (!gameOver && game->gameHasAI() && (game->getCurrentPlayer()->isAIPlayer() || game->_gameOptions.AIvsAI))
                     {
                         game->updateAI();
                     }
